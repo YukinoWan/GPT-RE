@@ -637,6 +637,10 @@ if __name__ == "__main__":
         print(args.num_na)
         assert False
     store_path = "./knn_{}_results/subtest_1/knn={}_{}_{}_seed={}_{}_randomlabel={}_fixedex={}_fixedtest={}".format(args.task, args.k, args.num_per_rel,args.num_na,args.seed,args.model,str(args.random_label),str(args.fixed_example),str(args.fixed_test), str(args.reasoning))
+    if not os.path.exists("./knn_{}_results".format(args.task)):
+        os.mkdir("./knn_{}_results".format(args.task))
+        os.mkdir("./knn_{}_results/subtest_1".format(args.task))
+        os.mkdir("./knn_{}_results/wholetest".format(args.task))
     if not os.path.exists(store_path):
         os.mkdir(store_path)
     
