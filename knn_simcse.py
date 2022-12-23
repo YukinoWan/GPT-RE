@@ -18,9 +18,9 @@ from simcse import SimCSE
 #print(results)
 
 
-
 def find_knn_example(model, test_dict, train_dict, k):
     test_sentences = " ".join(test_dict["sentences"][0])
+    label_other = 0
     #train_dict = {" ".join(x["sentences"][0]):x for x in train_list}
     #train_sentences = [x for x in train_dict.keys()]
     
@@ -36,6 +36,8 @@ def find_knn_example(model, test_dict, train_dict, k):
     #    assert False
     knn_result = model.search(test_sentences, device="cpu", threshold=0.0, top_k=k)
     knn_list = [train_dict[x[0]] for x in knn_result]
+    #if var and not no_na:
+    #    label_other = knn_variance(knn_list)
 
     #print(train_sentences[0])
     #print(knn_list)

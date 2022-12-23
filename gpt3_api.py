@@ -2,8 +2,9 @@ from typing import List
 import openai
 
 #openai.api_key = "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"
-openai.api_key = "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"
+#openai.api_key = "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"
 #openai.api_key = "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"
+openai.api_key = "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"
 
 
 class Demo(object):
