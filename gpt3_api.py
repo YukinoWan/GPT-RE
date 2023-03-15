@@ -1,10 +1,18 @@
 from typing import List
 import openai
+import os
+
+openai.api_type = "azure"
+openai.api_base = "https://pomegranate.openai.azure.com/"
+openai.api_version = "2022-12-01"
+#openai.api_key = "5f38917dc39d44818a7117b7c3da822d"
+openai.api_key = "82560beabdb543f68286c0e9fded05d0"
+#openai.api_key = os.getenv("OPENAI_API_KEY")
 
 #openai.api_key = "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"
 #openai.api_key = "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"
 #openai.api_key = "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"
-openai.api_key = "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"
+#openai.api_key = "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"
 
 
 class Demo(object):
@@ -37,7 +45,7 @@ class Demo(object):
 
 def run(prompt_list):
     demo = Demo(
-        engine="text-davinci-002",  # text-davinci-002: best, text-ada-001: lowest price
+        engine="kunlp-text-davinci-002",  # text-davinci-002: best, text-ada-001: lowest price
         temperature=0,  # control randomness: lowring results in less random completion (0 ~ 1.0)
         max_tokens=8,  # max number of tokens to generate (1 ~ 4,000)
         top_p=1,  # control diversity (0 ~ 1.0)

@@ -1,7 +1,7 @@
 python3 gpt3_relation.py \
     --task semeval \
-    --model text-davinci-003 \
-    --num_test 2717 \
+    --model kunlp-text-davinci-003 \
+    --num_test 10 \
     --example_dataset "./dataset/semeval_gpt/train.json" \
     --test_dataset "./dataset/semeval_gpt/test.json" \
     --fixed_example 0\
@@ -13,7 +13,7 @@ python3 gpt3_relation.py \
     --seed 0 \
     --random_label 0 \
     --reasoning 0 \
-    --use_knn 1 \
+    --use_knn 0 \
     --k 27 \
     --var 0 \
     --reverse 0 \
