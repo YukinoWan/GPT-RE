@@ -1,8 +1,9 @@
 import json
 
-with open("../test.json","w") as outfile:
-    with open("ent_pred_test.json","r") as f:
+with open("../dev.json","w") as outfile:
+    with open("./dev.json","r") as f:
         for line in f.read().splitlines():
+            print("n")
             pre_len = 0
             tmp_dict = json.loads(line)
             for _id in range(len(tmp_dict["sentences"])):

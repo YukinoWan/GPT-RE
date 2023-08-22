@@ -3,8 +3,11 @@ import statistics
 import os
 import pandas as pd
 import argparse
+import faiss
 import sys
 import math
+from tqdm import tqdm
+from transformers import pipeline
 from gpt3_api import Demo
 import random
 import numpy as np
@@ -14,26 +17,21 @@ from shared.const import semeval_idtoprompt
 from shared.const import ace05_reltoid
 from shared.const import ace05_idtoprompt
 from shared.const import tacred_reltoid
+from shared.const import scierc_reltoid
+from shared.const import wiki_reltoid
+from shared.prompt import instance
 from sklearn.metrics import classification_report
-from knn_simcse import find_knn_example
+from knn_simcse import find_knn_example, find_lmknn_example
 from simcse import SimCSE
 
-class instance:
-    def __init__(self, tmp_dict):
-        self.sentence = " ".join(tmp_dict["sentences"][0])
-        sub_head = tmp_dict["ner"][0][0][0]
-        sub_tail = tmp_dict["ner"][0][0][1] + 1
+from shared.prompt import generate_zero_prompt
+from shared.prompt import generate_select_prompt
+from shared.prompt import generate_select_auto_prompt
+from shared.result import get_results_onebyone
+from shared.result import get_results_select
 
-                
-        obj_head = tmp_dict["ner"][0][1][0]
-        obj_tail = tmp_dict["ner"][0][1][1] + 1
+           #print(prompt_query)
 
-        self.head = " ".join(tmp_dict["sentences"][0][sub_head:sub_tail])
-        self.head_type = tmp_dict["ner"][0][0][2]
-        self.tail = " ".join(tmp_dict["sentences"][0][obj_head:obj_tail])
-        self.tail_type = tmp_dict["ner"][0][1][2]
-
-        self.reference = "The relation between \"" + self.head + "\" and \"" + self.tail + "\" in the sentence \"" + self.sentence + "\""
 def generate_relation_dict_label(dataset):
     labels = []
     with open(dataset, "r") as f:
@@ -95,114 +93,6 @@ def build_query_dict(dataset):
 
 
 
-def generate_zero_prompt(tmp_dict, query_dict, relation_list):
-    prompt_list = []
-    if True:
-        string = " ".join(tmp_dict["sentences"][0])
-        sub_head = tmp_dict["ner"][0][0][0]
-        sub_tail = tmp_dict["ner"][0][0][1] + 1
-
-                
-        obj_head = tmp_dict["ner"][0][1][0]
-        obj_tail = tmp_dict["ner"][0][1][1] + 1
-
-        entity1 = " ".join(tmp_dict["sentences"][0][sub_head:sub_tail])
-        entity1_type = tmp_dict["ner"][0][0][2]
-        entity2 = " ".join(tmp_dict["sentences"][0][obj_head:obj_tail])
-        entity2_type = tmp_dict["ner"][0][1][2]
-
-        query_list = generate_query(entity1_type, entity2_type, relation_list, query_dict)
-        for query in query_list:
-            prompt = "Context: " + string + "\n" + "Please " + query.replace("XXX", entity1) + "\nEntities:"
-            prompt_list.append(prompt)
-
-        return prompt_list , entity1, entity2
-def generate_select_prompt(tmp_dict, query_dict, relation_list):
-    #prompt_list = []
-    if True:
-        string = " ".join(tmp_dict["sentences"][0])
-        sub_head = tmp_dict["ner"][0][0][0]
-        sub_tail = tmp_dict["ner"][0][0][1] + 1
-
-                
-        obj_head = tmp_dict["ner"][0][1][0]
-        obj_tail = tmp_dict["ner"][0][1][1] + 1
-
-        entity1 = " ".join(tmp_dict["sentences"][0][sub_head:sub_tail])
-        entity1_type = tmp_dict["ner"][0][0][2]
-        entity2 = " ".join(tmp_dict["sentences"][0][obj_head:obj_tail])
-        entity2_type = tmp_dict["ner"][0][1][2]
-
-        prompt = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, the subject and the object, I'll output one character of the most precise relation of the subject towards the object based on the context, choosing from six possible relations. If all choices are not proper, I will output the number 0.\nContext: " + string + "\n" + "Subject: " + entity1 + "\nObject: " + entity2 + "\nChoice A: Physical Relationship\nChoice B: General-Affiliation Relationship\nChoice C: Person-Social Relationship\nChoice D: Organization-Affiliation Relationship\nChoice E: Part-Whole Relationship\nChoice F: Agent-Artifact Relationship\nOutput:"
-        #print(prompt)
-        #prompt_list.append(prompt)
-
-        return prompt, entity1, entity2
-
-def generate_select_auto_prompt(tmp_dict, example_prompt, relation_dict, no_na, reasoning):
-    #prompt_list = []
-    if True:
-        string = " ".join(tmp_dict["sentences"][0])
-        sub_head = tmp_dict["ner"][0][0][0]
-        sub_tail = tmp_dict["ner"][0][0][1] + 1
-
-                
-        obj_head = tmp_dict["ner"][0][1][0]
-        obj_tail = tmp_dict["ner"][0][1][1] + 1
-
-        entity1 = " ".join(tmp_dict["sentences"][0][sub_head:sub_tail])
-        entity1_type = tmp_dict["ner"][0][0][2]
-        entity2 = " ".join(tmp_dict["sentences"][0][obj_head:obj_tail])
-        entity2_type = tmp_dict["ner"][0][1][2]
-
-        #query_list = generate_query(entity1_type, entity2_type, relation_list, query_dict)
-        #for query in query_list:
-        #task_def_choice = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, the subject and the object, I'll output one character of the most precise relation of the subject towards the object based on the context, choosing from six possible relations. If all choices are not proper, I will output the number 0.\nChoice A: Physical Relationship\nChoice B: General-Affiliation Relationship\nChoice C: Person-Social Relationship\nChoice D: Organization-Affiliation Relationship\nChoice E: Part-Whole Relationship\nChoice F: Agent-Artifact Relationship\n"
-        #task_def_choice = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, the subject and the object, I'll output the most precise relation of the subject towards the object based on the context, choosing from six possible relations. If all choices are not proper, I will output NONE.\n\nPHYSICAL: located, near\nGENERAL AND AFFILIATION: citizen, resident, religion, ethnicity, organization location\nPERSON AND SOCIAL: business,family,lasting personal\nORGANIZATION AND AFFILIATION: employment,founder,ownership,student alumn,sports affiliation,investor shareholder,membership\nPART AND WHOLE: artifact,geographical,subsidiary\nAGENT AND ARTIFACT: user, owner, inventor, manufacturer\n"
-        #task_def_choice = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, the subject and the object, I'll output the most precise relation of the subject towards the object based on the context, choosing from six possible relations.\n\nPHYSICAL: located, near\nGENERAL AND AFFILIATION: citizen, resident, religion, ethnicity, organization location\nPERSON AND SOCIAL: business,family,lasting personal\nORGANIZATION AND AFFILIATION: employment,founder,ownership,student alumn,sports affiliation,investor shareholder,membership\nPART AND WHOLE: artifact,geographical,subsidiary\nAGENT AND ARTIFACT: user, owner, inventor, manufacturer\n"
-        choice_def = "CAUSE AND EFFECT: an event or object yields an effect\nCOMPONENT AND WHOLE: an object is a component of a larger whole\nENTITY AND DESTINATION: an entity is moving towards a destination\nENTITY AND ORIGIN: an entity is coming or is derived from an origin\nPRODUCT AND PRODUCER: a producer causes a product to exist\nMEMBER AND COLLECTION: a member forms a nonfunctional part of a collection\nMESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic\nCONTENT AND CONTAINER: an object is physically stored in a delineated area of space\nINSTRUMENT AND AGENCY: an agent uses an instrument\n"
-        choice_def_na = "CAUSE AND EFFECT: an event or object yields an effect\nCOMPONENT AND WHOLE: an object is a component of a larger whole\nENTITY AND DESTINATION: an entity is moving towards a destination\nENTITY AND ORIGIN: an entity is coming or is derived from an origin\nPRODUCT AND PRODUCER: a producer causes a product to exist\nMEMBER AND COLLECTION: a member forms a nonfunctional part of a collection\nMESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic\nCONTENT AND CONTAINER: an object is physically stored in a delineated area of space\nINSTRUMENT AND AGENCY: an agent uses an instrument\nOTHER: other possible relation types excluding these nine relations"
-        choice_reason = "CAUSE AND EFFECT\nCOMPONENT AND WHOLE\nENTITY AND DESTINATION\nENTITY AND ORIGIN\nPRODUCT AND PRODUCER\nMEMBER AND COLLECTION\nMESSAGE AND TOPIC\nCONTENT AND CONTAINE\nINSTRUMENT AND AGENCY\n"
-
-        #task_def_choice_na = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation of the subject towards the object based on the context, choosing from nine possible relations. If all relations are not proper, I will output OTHER.\n\n"
-        tacred_def_choice_na = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities. If there is no relation between them, I will output NONE\n\n"
-        task_def_choice_na = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll first consider whether the most precise relation between two entities belongs to nine possible relations. If yes, I will output the most precise relation, otherwise I will output OTHER.\n\n"
-        
-        #task_def_choice_na = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll first consider whether the most precise relation between two entities. If yes, I will output the most precise relation, otherwise I will output OTHER.\n\n"
-        #task_def_choice_na = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation of the subject towards the object based on the context, choosing from nine possible relations. If all relations are not proper, I will output OTHER.\n\nCAUSE AND EFFECT: an event or object yields an effect\nCOMPONENT AND WHOLE: an object is a component of a larger whole\nENTITY AND DESTINATION: an entity is moving towards a destination\nENTITY AND ORIGIN: an entity is coming or is derived from an origin\nPRODUCT AND PRODUCER: a producer causes a product to exist\nMEMBER AND COLLECTION: a member forms a nonfunctional part of a collection\nMESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic\nCONTENT AND CONTAINER: an object is physically stored in a delineated area of space\nINSTRUMENT AND AGENCY: an agent uses an instrument\n"
-        task_def_choice = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:\n"
-        tacred_def_choice = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context\n"
-        #task_def_choice_na = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, the subject and the object, I'll output the most precise relation of the subject towards the object based on the context, choosing from six possible relations. If all relations are not proper, I will output NONE.\n\nPHYSICAL: located, near\nGENERAL AND AFFILIATION: citizen, resident, religion, ethnicity, organization location\nPERSON AND SOCIAL: business,family,lasting personal\nORGANIZATION AND AFFILIATION: employment,founder,ownership,student alumn,sports affiliation,investor shareholder,membership\nPART AND WHOLE: artifact,geographical,subsidiary\nAGENT AND ARTIFACT: user, owner, inventor, manufacturer\n"
-        #task_def_choice = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, the subject and the object, I'll output the most precise relation of the subject towards the object based on the context, choosing from six possible relations.\n\nPHYSICAL: located, near\nGENERAL AND AFFILIATION: citizen, resident, religion, ethnicity, organization location\nPERSON AND SOCIAL: business,family,lasting personal\nORGANIZATION AND AFFILIATION: employment,founder,ownership,student alumn,sports affiliation,investor shareholder,membership\nPART AND WHOLE: artifact,geographical,subsidiary\nAGENT AND ARTIFACT: user, owner, inventor, manufacturer\n"
-        task_def_others = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, the subject and the object, I'll output the most precise relation of the subject towards the object based on the context, choosing from seven possible relations.\n\nPHYSICAL: located, near\nGENERAL AND AFFILIATION: citizen, resident, religion, ethnicity, organization location\nPERSON AND SOCIAL: business,family,lasting personal\nORGANIZATION AND AFFILIATION: employment,founder,ownership,student alumn,sports affiliation,investor shareholder,membership\nPART AND WHOLE: artifact,geographical,subsidiary\nAGENT AND ARTIFACT: user, owner, inventor, manufacturer\nOTHERS: the relation does not belongs to the previous six choices\n"
-        task_def = "I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, the subject and the object, I'll output one character of the most precise relation of the subject towards the object based on the context, choosing from six possible relations. If all choices are not proper, I will output None."
-        query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is"
-        #query = instance(tmp_dict).reference + " is"
-        #query = "Given the sentence: \"" + string + "\", What are the clues that lead the relation between \"" + entity1 + "\" and \"" + entity2 + "\" to be"
-        #query = "\nContext: " + string + "\n" + "Subject: " + entity1 + "\nObject: " + entity2 + "\nOutput:"
-
-        if args.task == "tacred":
-            if no_na:
-                prompt = tacred_def_choice + example_prompt + query
-            else:
-                prompt = tacred_def_choice_na + example_prompt + query
-            return prompt, entity1, entity2
-        if reasoning:
-            choice = choice_def
-        else:
-            choice = choice_def
-        if no_na:
-            prompt = task_def_choice + choice +example_prompt + query
-        else:
-
-            prompt = task_def_choice_na + choice + example_prompt + query
-        #print(prompt)
-        #assert False
-        #assert False
-        #prompt_list.append(prompt)
-
-        return prompt, entity1, entity2
-
 def get_train_example(example_path, reltoid, no_na):
     example_dict = {k:list() for k in reltoid.values()}
     with open(example_path, "r") as f:
@@ -256,7 +146,7 @@ def auto_generate_example(example_dict, reltoid, idtoprompt, num_per_rel, num_na
 
     flat_examples = [item for sublist in examples for item in sublist]
     #print(len(examples))
-    example_list = random.sample(flat_examples, len(flat_examples))
+    example_list = random.sample(flat_examples, num_example)
     #assert False
     
     example_prompt = str()
@@ -282,14 +172,6 @@ def auto_generate_example(example_dict, reltoid, idtoprompt, num_per_rel, num_na
             rel = tmp_dict["relations"][0][0][4]
 
 
-        #rel = random.choice(["None", "PHYS","GEN-AFF", "PER-SOC","ORG-AFF","PART-WHOLE", "ART"])
-
-        #query = "\nChoice A: Physical Relationship\nChoice B: General-Affiliation Relationship\nChoice C: Person-Social Relationship\nChoice D: Organization-Affiliation Relationship\nChoice E: Part-Whole Relationship\nChoice F: Agent-Artifact Relationship"
-        #query = "\nPhysical: located, near\nGeneral and affiliation: citizen, resident, religion, ethnicity, organization location\nPerson and social: business,family,lasting personal\nOrganization and affiliation: employment,founder,ownership,student alumn,sports affiliation,investor shareholder,membership\nPart and whole: artifact,geographical,subsidiary\nAgent and artifact: user, owner, inventor, manufacturer"
-        #query = "\nPhysical\nGeneral and affiliation\nPerson and social\nOrganization and affiliation\nPart and whole\nAgent and artifact"
-
-        #prompt_query = "\nContext: " + string + "\n" + "Subject: " + entity1 + "\nObject: " + entity2 + query + "\nOutput: " + reltoalpha[relation_dict[rel]]
-        #prompt_query = "\nContext: " + string + "\n" + "Subject: " + entity1 + "\nObject: " + entity2 + "\nOutput: " + idtoprompt[reltoid[rel]] + "\n"
         if not reasoning:
             prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ".\n"
         else:
@@ -353,82 +235,6 @@ def smooth(x):
         return x
 
 
-def get_results_onebyone(demo, prompt_list, target):
-    threshold = 0.2
-    prob_on_rel = []
-    for prompt in prompt_list:
-        results, probs = demo.get_multiple_sample(prompt)
-        #print("----------------\n")
-        #print(prompt)
-        #print(results[0])
-        #print(probs[0])
-        
-        if target in results[0]:
-            #probs_list = {k.strip():data[k] for data in probs[0]["top_logprobs"] for k in data.keys()}
-            #print(probs_list)
-            #print("promp")
-            #print(prompt)
-            prob = find_prob(target, results[0], probs[0])
-            prob_on_rel.append(prob)
-            #print(prob_on_rel)
-        else:
-            prob_on_rel.append(0)
-            #print(prob_on_rel)
-    prob_on_rel = np.insert(smooth(np.array(prob_on_rel)), 0, threshold)
-    pred = np.argmax(prob_on_rel)
-    return pred, prob_on_rel
-
-
-
-def get_results_select(demo, prompt, reltoid, idtoprompt_ori, verbalize):
-    #idtoprompt = {k:v for k,v in idtoprompt_ori.items()}
-    #print(prompt)
-    #assert False
-    while True:
-        try:
-            results, probs = demo.get_multiple_sample(prompt)
-            break
-        except:
-            continue
-
-    idtoprompt = {"other":0, "cause and effect: an event or object yields an effect":1,"component and whole: an object is a component of a larger whole":2,"entity and destination: an entity is moving towards a destination":3,"entity and origin: an entity is coming or is derived from an origin":4,"product and producer: a producer causes a product to exist":5,"member and collection: a member forms a nonfunctional part of a collection":6, "message and topic: an act of communication, writter or spoken, is about a topic":7,"content and container: an object is physically stored in a delineated area of space":8, "instrument and agency: an agent uses an instrument":9}
-    if verbalize:
-        idtoprompt[4] += "/PER:NATIONALITY/PER:ETHNICITY"
-        idtoprompt[3] += "/ORG:MERGERS"
-        idtoprompt[30] += "/PER:CITY_OF_RESIDENCE"
-        idtoprompt[1] += "/PER:OCCUPATION"
-        idtoprompt[19] += "/ORG:ALTERNATE_NAME"
-        idtoprompt[32] += "/PER:CRIMINAL_CHARGE"
-        idtoprompt[6] += "/ORG:LOCATION_OF_HEADQUARTERS"
-        idtoprompt[9] += "/PER:EMPLOYER"
-        idtoprompt[5] += "/ORG:EMPLOYEES/ORG:EMPLOYERS/ORG:EMPLOYER/ORG:EMPLOYEE"
-    #select_dict = {"none":0, "physical: located, near":1,"general and affiliation: citizen, resident, religion, ethnicity, organization location":2,"person and social: business,family,lasting personal":3,"organization and affiliation: employment,founder,ownership,student alumn,sports affiliation,investor shareholder,membership":4,"part and whole: artifact,geographical,subsidiary":5,"agent and artifact: user, owner, inventor, manufacturer":6}
- 
-    if True:
-        #return int(select_dict[results[0].strip()]), math.exp(probs[0]["token_logprobs"][0])
-        #choice = [select_dict[i] for i in select_dict.keys() if results[0].strip() in select_dict[i]]]
-        choice = 0
-        for key, value in idtoprompt.items():
-            if results[0].strip().strip(".").lower() in key.lower():
-                choice = value
-        if choice == 0:
-            for key in idtoprompt_ori.keys():
-                if idtoprompt_ori[key].lower() in results[0].lower():
-                    choice = key
-        #assert False
-        print(results)
-        print("the choice is ",choice)
-        #if int(choice) == 7:
-        #    print(results)
-        #    assert False
-        #print(choice)
-        return int(choice), math.exp(probs[0]["token_logprobs"][0])
-    else:
-        print(prompt)
-        print(results[0].strip())
-        print(probs[0]["token_logprobs"][0])
-        assert False
-
     
 def compute_variance(knn_distribution):
     count_dis = [0 for x in range(len(knn_distribution))]
@@ -442,12 +248,86 @@ def compute_variance(knn_distribution):
         return 1
     else:
         return 0
-def generate_knn_example(knn_model, tmp_dict, train_dict, k, reltoid, idtoprompt, num_per_rel, num_na, random_label, reasoning, demo, var, args):
+
+def generate_ft_example(tmp_dict, ft_dict, reltoid, idtoprompt, demo, args):
+    tmp_example = instance(tmp_dict)
+
+    example_list = ft_dict[tmp_example.id]
+    if args.reverse:
+        example_list.reverse()
+    label_other = 0
+    tmp_knn = []
+    example_prompt = str()
+    if args.var:
+        knn_distribution = []
+        for tmp_dict in example_list:
+            if tmp_dict["relations"] == [[]]:
+                rel = 'NONE'
+            else:
+                rel = tmp_dict["relations"][0][0][4]
+            knn_distribution.append(reltoid[rel])
+        label_other = compute_variance(knn_distribution)
+    for tmp_dict in example_list:
+        string = " ".join(tmp_dict["sentences"][0])
+        sub_head = tmp_dict["ner"][0][0][0]
+        sub_tail = tmp_dict["ner"][0][0][1] + 1
+
+                
+        obj_head = tmp_dict["ner"][0][1][0]
+        obj_tail = tmp_dict["ner"][0][1][1] + 1
+
+        entity1 = " ".join(tmp_dict["sentences"][0][sub_head:sub_tail])
+        entity1_type = tmp_dict["ner"][0][0][2]
+        entity2 = " ".join(tmp_dict["sentences"][0][obj_head:obj_tail])
+        entity2_type = tmp_dict["ner"][0][1][2]
+
+        if args.random_label:
+            rel = random.choice([x for x in reltoid.keys()])
+        elif tmp_dict["relations"] == [[]]:
+            rel = 'NONE'
+        else:
+            rel = tmp_dict["relations"][0][0][4]
+        tmp_knn.append(reltoid[rel])
+
+        tmp_example = instance(tmp_dict)
+        if not args.reasoning or label_other == 1:
+            if args.structure:
+                prompt_query = tmp_example.prompt + tmp_example.pred + idtoprompt[reltoid[rel]] + "\n"
+            else:
+                prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ".\n"
+            #prompt_query = instance(tmp_dict).reference + " is " + idtoprompt[reltoid[rel]] + ".\n\n"
+        elif args.self_error:
+            prompt_query = tmp_example.get_self_error(tmp_dict, demo, reltoid, idtoprompt, args)
+        else:
+            #tmp_query = "\nGiven the sentence: \"" + string + "\", What are the clues that lead the relation between \"" + entity1 + "\" and \"" + entity2 + "\" to be " + idtoprompt[reltoid[rel]] + "?"
+            tmp_query = "What are the clues that lead the relation between \"" + entity1 + "\" and \"" + entity2 + "\" to be " + idtoprompt[reltoid[rel]] + " in the sentence \"" + string + "\"?"
+            #print(prompt_query)
+            #assert False
+
+            while(True):
+                try:
+                    results, probs = demo.get_multiple_sample(tmp_query)
+                    break
+                except:
+                    continue
+            #prompt_query = prompt_query + results[0] +"\n"
+            if args.structure:
+                prompt_query = tmp_example.prompt + tmp_example.clue + results[0] + tmp_example.pred + idtoprompt[reltoid[rel]] + "\n"
+            else:
+                prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ". It is because:\n" + results[0] + "\n"
+            #print(prompt_query)
+            #assert False
+        example_prompt += prompt_query
+    return example_prompt, tmp_knn, label_other, example_list
+
+
+
+def generate_lm_example(gpu_index_flat, tmp_dict, train_dict, train_sentences, k, reltoid, idtoprompt, num_per_rel, num_na, random_label, reasoning, demo, var, args):
     #train_list = [x for y in train_dict.values() for x in y]
     #print(tmp_dict)
     #assert False
     #print(len(train_list))
-    example_list = find_knn_example(knn_model, tmp_dict,train_dict,k)
+    example_list = find_lmknn_example(gpu_index_flat, tmp_dict,train_dict,train_sentences, k)
     
     if args.reverse:
         example_list.reverse()
@@ -485,13 +365,16 @@ def generate_knn_example(knn_model, tmp_dict, train_dict, k, reltoid, idtoprompt
             rel = tmp_dict["relations"][0][0][4]
         tmp_knn.append(reltoid[rel])
 
+        tmp_example = instance(tmp_dict)
         if not reasoning or label_other == 1:
-            prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ".\n"
+            if args.structure:
+                prompt_query = tmp_example.prompt + tmp_example.pred + idtoprompt[reltoid[rel]] + "\n"
+            else:
+                prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ".\n"
             #prompt_query = instance(tmp_dict).reference + " is " + idtoprompt[reltoid[rel]] + ".\n\n"
         else:
             #tmp_query = "\nGiven the sentence: \"" + string + "\", What are the clues that lead the relation between \"" + entity1 + "\" and \"" + entity2 + "\" to be " + idtoprompt[reltoid[rel]] + "?"
             tmp_query = "What are the clues that lead the relation between \"" + entity1 + "\" and \"" + entity2 + "\" to be " + idtoprompt[reltoid[rel]] + " in the sentence \"" + string + "\"?"
-            prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ". It is because:"
             #print(prompt_query)
             #assert False
 
@@ -501,11 +384,155 @@ def generate_knn_example(knn_model, tmp_dict, train_dict, k, reltoid, idtoprompt
                     break
                 except:
                     continue
-            prompt_query = prompt_query + results[0] +"\n"
+            #prompt_query = prompt_query + results[0] +"\n"
+            if args.structure:
+                prompt_query = tmp_example.prompt + tmp_example.clue + results[0] + tmp_example.pred + idtoprompt[reltoid[rel]] + "\n"
+            else:
+                prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ". It is because:\n" + results[0] + "\n"
             #print(prompt_query)
             #assert False
         example_prompt += prompt_query
-    return example_prompt, tmp_knn, label_other
+    return example_prompt, tmp_knn, label_other, example_list
+
+
+
+def generate_knn_example(knn_model, tmp_dict, train_dict, k, reltoid, idtoprompt, num_per_rel, num_na, random_label, reasoning, demo, var, args):
+    #train_list = [x for y in train_dict.values() for x in y]
+    #print(tmp_dict)
+    #assert False
+    #print(len(train_list))
+    example_list = find_knn_example(knn_model, tmp_dict,train_dict,k, args.entity_info)
+    
+    if args.reverse:
+        example_list.reverse()
+    label_other = 0
+    tmp_knn = []
+    example_prompt = str()
+    if var:
+        knn_distribution = []
+        for tmp_dict in example_list:
+            if tmp_dict["relations"] == [[]]:
+                rel = 'NONE'
+            else:
+                rel = tmp_dict["relations"][0][0][4]
+            knn_distribution.append(reltoid[rel])
+        label_other = compute_variance(knn_distribution)
+    for tmp_dict in example_list:
+        string = " ".join(tmp_dict["sentences"][0])
+        sub_head = tmp_dict["ner"][0][0][0]
+        sub_tail = tmp_dict["ner"][0][0][1] + 1
+
+                
+        obj_head = tmp_dict["ner"][0][1][0]
+        obj_tail = tmp_dict["ner"][0][1][1] + 1
+
+        entity1 = " ".join(tmp_dict["sentences"][0][sub_head:sub_tail])
+        entity1_type = tmp_dict["ner"][0][0][2]
+        entity2 = " ".join(tmp_dict["sentences"][0][obj_head:obj_tail])
+        entity2_type = tmp_dict["ner"][0][1][2]
+
+        if random_label:
+            rel = random.choice([x for x in reltoid.keys()])
+        elif tmp_dict["relations"] == [[]]:
+            rel = 'NONE'
+        else:
+            rel = tmp_dict["relations"][0][0][4]
+        tmp_knn.append(reltoid[rel])
+
+        tmp_example = instance(tmp_dict)
+        if not reasoning or label_other == 1:
+            if args.structure:
+                prompt_query = tmp_example.prompt + tmp_example.pred + idtoprompt[reltoid[rel]] + "\n"
+            else:
+                prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ".\n"
+            #prompt_query = instance(tmp_dict).reference + " is " + idtoprompt[reltoid[rel]] + ".\n\n"
+        else:
+            #tmp_query = "\nGiven the sentence: \"" + string + "\", What are the clues that lead the relation between \"" + entity1 + "\" and \"" + entity2 + "\" to be " + idtoprompt[reltoid[rel]] + "?"
+            tmp_query = "What are the clues that lead the relation between \"" + entity1 + "\" and \"" + entity2 + "\" to be " + idtoprompt[reltoid[rel]] + " in the sentence \"" + string + "\"?"
+            #print(prompt_query)
+            #assert False
+
+            while(True):
+                try:
+                    results, probs = demo.get_multiple_sample(tmp_query)
+                    break
+                except:
+                    continue
+            #prompt_query = prompt_query + results[0] +"\n"
+            if args.structure:
+                prompt_query = tmp_example.prompt + tmp_example.clue + results[0] + tmp_example.pred + idtoprompt[reltoid[rel]] + "\n"
+            else:
+                prompt_query = "\nContext: " + string + "\n" + "Given the context, the relation between " + entity1 + " and " + entity2 + " is " + idtoprompt[reltoid[rel]] + ". It is because:\n" + results[0] + "\n"
+            #print(prompt_query)
+            #assert False
+        example_prompt += prompt_query
+    return example_prompt, tmp_knn, label_other, example_list
+
+
+
+def generate_ft_dict(args):
+    ft_dict = {}
+    knn_dict = {}
+    train_dict = {}
+    if args.use_dev and args.store_error_reason:
+        knn_path = "./knn_ids/knn_ids_{}_train_dev.txt".format(args.task)
+    elif args.use_dev:
+        knn_path = "./knn_ids/knn_ids_{}_dev.txt".format(args.task)
+    else:
+        knn_path = "./knn_ids/knn_ids_{}.txt".format(args.task)
+    with open(knn_path, "r") as f:
+        num_id = 0
+        for line in f.read().splitlines():
+            knn_num = line.split(" ")
+            ft_dict[num_id] = knn_num[:args.k]
+            num_id += 1
+
+    with open(args.test_dataset, "r") as f:
+        num_id = 0
+        for line in f.read().splitlines():
+            tmp_dict = json.loads(line)
+            knn_dict[tmp_dict["doc_key"]] = ft_dict[num_id]
+            num_id += 1
+    with open(args.example_dataset, "r") as f:
+        num_id = 0
+        for line in f.read().splitlines():
+            tmp_dict = json.loads(line)
+            train_dict[num_id] = tmp_dict
+            num_id += 1
+    knn_ft_dict = {}
+    for key in knn_dict.keys():
+        #print(knn_dict[key])
+        #print(train_dict)
+        knn_ft_dict[key] = [train_dict[int(x)] for x in knn_dict[key]]
+    return knn_ft_dict
+
+def get_binary_select(pred, tmp_dict, demo, knn_list, reltoid, idtoprompt, args):
+    test_example = instance(tmp_dict)
+    prompt_list = str()
+    for example in knn_list:
+        knn_example = instance(example)
+        if pred == reltoid[knn_example.rel]:
+            prompt_list += knn_example.discriminator + idtoprompt[pred] + "?" + knn_example.answer + " yes.\n"
+        else:
+
+            prompt_list += knn_example.discriminator + idtoprompt[pred] + "?" + knn_example.answer + " no.\n"
+
+    
+    prompt_list += test_example.discriminator + idtoprompt[pred] + "?" + test_example.answer
+
+    while True:
+        try:
+            results, probs = demo.get_multiple_sample(prompt_list)
+            break
+        except:
+            continue
+    
+    #print(prompt_list)
+    print(results[0])
+    #assert False
+    if "no" in results[0]:
+        pred = 0
+    return pred, math.exp(probs[0]["token_logprobs"][0])
 
 
 
@@ -532,7 +559,10 @@ def run(reltoid, idtoprompt, store_path, args):
     flat_examples = [item for sublist in test_dict.values() for item in sublist]
     test_examples = random.sample(flat_examples, args.num_test)
 
-    if args.use_knn:
+    if args.use_ft:
+            #ft_file = "./knn_ids/knn_ids_{}.txt".format(args.task)
+        ft_dict = generate_ft_dict(args)
+    elif args.use_knn:
         #train_list = test_examples
         train_list = [x for y in example_dict.values() for x in y]
         if args.no_na:
@@ -542,53 +572,90 @@ def run(reltoid, idtoprompt, store_path, args):
 
                 train_list = [x for x in train_list if x["relations"] != [[]]]
         #train_dict = {"The relation between" + "\"" + x["ner"][0][0][2] + "\" and \"" + x["ner"][0][1][2] + "\" in the sentence \"" + " ".join(x["sentences"][0]) + "\"":x for x in train_list}
-        if args.entity_info:
-            train_dict = {instance(x).reference:x for x in train_list}
-        else:
-            train_dict = {instance(x).sentence:x for x in train_list}
-        train_sentences = [x for x in train_dict.keys()]
+        if not args.lm_mask:
+            if args.entity_info:
+                train_dict = {instance(x).reference:x for x in train_list}
+                train_sentences = [instance(x).reference for x in train_list]
+            else:
+                train_dict = {instance(x).sentence:x for x in train_list}
+                train_sentences = [instance(x).sentence for x in train_list]
 
-        #knn_model = SimCSE("princeton-nlp/sup-simcse-bert-base-uncased")
-        knn_model = SimCSE("princeton-nlp/sup-simcse-bert-base-uncased")
-        knn_model.build_index(train_sentences, device="cpu")
+            knn_model = SimCSE("princeton-nlp/sup-simcse-roberta-large")
+            #knn_model = SimCSE("princeton-nlp/sup-simcse-bert-base-uncased")
+            knn_model.build_index(train_sentences, device="cpu")
+        else:
+            train_dict = {instance(x).lm_mask:x for x in train_list}
+            train_sentences = [instance(x).lm_mask for x in train_list]
+
+            res = faiss.StandardGpuResources()
+
+            index_flat = faiss.IndexFlatL2(1024)
+            gpu_index_flat = faiss.index_cpu_to_gpu(res, 0, index_flat)
+
+            extractor = pipeline(model="roberta-large", task="feature-extraction")
+            embed_array = []
+            for item in tqdm(train_sentences):
+
+                result = extractor(item, return_tensors=True)
+
+                embeds = result[0].detach().numpy().copy()
+                embed_array.append(embeds[-3,:])
+
+            embed_list = np.array(embed_array)
+            gpu_index_flat.add(embed_list)
 
     print(len(test_examples))
 
     micro_f1 = 0.0
     #example_prompt = auto_generate_example(example_dataset, relation_dict, 18, True)
     for run in range(args.num_run):
-        example_prompt = auto_generate_example(example_dict, reltoid, idtoprompt, args.num_per_rel, args.num_na, args.random_label, args.reasoning, demo)
-        print(example_prompt)
+        if args.fixed_example:
+            example_prompt = auto_generate_example(example_dict, reltoid, idtoprompt, args.num_per_rel, args.num_na, args.random_label, args.reasoning, demo)
+            print(example_prompt)
         if not args.fixed_test:
             test_examples = random.sample(flat_examples, args.num_test)
         labels = []
         preds = []
         num = 0
         whole_knn = []
+        whole_prob = []
+        whole_prob_on_rel = []
+        store_error_reason = {}
+        azure_error = []
         for tmp_dict in test_examples:
             tmp_knn = []
             #tmp_dict = json.loads(line)
-            na_filter = random.random()
+            #na_filter = random.random()
             #rel_filter = random.random()
             if tmp_dict["relations"] == [[]] and args.no_na:
                 num += 1
                 continue
-            elif tmp_dict["relations"] == [[]] and na_filter < 0.95:
-                num += 1
-                continue
+            #elif tmp_dict["relations"] == [[]] and na_filter < 0.95:
+            #    num += 1
+            #    continue
             if tmp_dict["relations"] != [[]] and tmp_dict["relations"][0][0][4] == "Other" and args.no_na:
                 num += 1
                 continue
             #if rel_filter < 0.5:
             #    lineid += 1
             #    continue
-
+            #elif tmp_dict["relations"] == [[]] and na_filter < 0.95:
+            #    num += 1
+            #    continue
+            if tmp_dict["relations"] != [[]] and tmp_dict["relations"][0][0][4] != "Other" and args.null:
+                num += 1
+                continue
             #example_dict = get_train_example(example_dataset, reltoid)
             label_other = 0
             if not args.fixed_example and not args.use_knn:
                 example_prompt = auto_generate_example(example_dict, reltoid, idtoprompt, args.num_per_rel, args.num_na, args.random_label, args.reasoning, demo)
             if args.use_knn:
-                example_prompt, tmp_knn, label_other = generate_knn_example(knn_model, tmp_dict, train_dict, args.k, reltoid, idtoprompt, args.num_per_rel, args.num_na, args.random_label, args.reasoning, demo, args.var, args)
+                if args.use_ft:
+                    example_prompt, tmp_knn, label_other, knn_list = generate_ft_example(tmp_dict, ft_dict, reltoid, idtoprompt, demo, args)
+                elif args.lm_mask:
+                    example_prompt, tmp_knn, label_other, knn_list = generate_lm_example(gpu_index_flat, tmp_dict, train_dict, train_sentences, args.k, reltoid, idtoprompt, args.num_per_rel, args.num_na, args.random_label, args.reasoning, demo, args.var, args)
+                else:
+                    example_prompt, tmp_knn, label_other, knn_list = generate_knn_example(knn_model, tmp_dict, train_dict, args.k, reltoid, idtoprompt, args.num_per_rel, args.num_na, args.random_label, args.reasoning, demo, args.var, args)
                 whole_knn.append(tmp_knn)
             num += 1
             if tmp_dict["relations"] == [[]]:
@@ -598,20 +665,40 @@ def run(reltoid, idtoprompt, store_path, args):
             sentence = " ".join(tmp_dict["sentences"][0])
             #prompt_list, subject, target = generate_zero_prompt(tmp_dict, query_dict, relation_dict.keys())
 
-            prompt_list, subject, target = generate_select_auto_prompt(tmp_dict, example_prompt, reltoid, args.no_na, args.reasoning)
+            prompt_list, subject, target = generate_select_auto_prompt(tmp_dict, example_prompt, reltoid, args.no_na, args.reasoning, args)
             #results, probs = demo.get_multiple_sample(prompt_list)
             #pred, prob_on_rel = get_results_onebyone(demo, prompt_list, target)
             #print(prompt_list)
             #assert False
             if args.var and label_other == 1:
                 pred = 0
+                prob_on_rel = 0
+                prob = {"NONE": 1}
             else:
-                pred, prob_on_rel = get_results_select(demo, prompt_list, reltoid, idtoprompt, args.verbalize)
+                pred, prob_on_rel, prob, error = get_results_select(demo, prompt_list, reltoid, idtoprompt, args.verbalize, args)
+                if error:
+                    azure_error.append(tmp_dict["doc_key"])
+                if args.discriminator and pred != 0:
+                    ori_pred = pred
+                    pred, prob = get_binary_select(pred, tmp_dict, demo, knn_list, reltoid, idtoprompt, args)
+                    if pred != ori_pred:
+                        print("work!")
+
+                if args.task == "wiki80" and pred == 0:
+                    pred = labels[-1]
+                
+                #print(prob_on_rel)
+                #assert False
+            whole_prob.append(prob)
+            whole_prob_on_rel.append(prob_on_rel)
             preds.append(pred)
             f1_result = compute_f1(preds, labels)
             print(f1_result, end="\n")
             
             if preds[-1] != labels[-1]:
+                if args.store_error_reason:
+                    error_reason = instance(tmp_dict).get_error_reason(preds[-1], tmp_dict, example_prompt, demo, idtoprompt, reltoid, args)
+                    store_error_reason[instance(tmp_dict).id] = error_reason
                 with open("{}/negtive.txt".format(store_path), "a") as negf:
                 
                     #negf.write(args)
@@ -623,8 +710,13 @@ def run(reltoid, idtoprompt, store_path, args):
                     negf.write("Prediction: " + str(preds[-1]) + "\n")
                     #negf.write(preds[num])
                     negf.write("Gold: " + str(labels[-1]) + "\n")
-                    #negf.write(labels[num])
+                    negf.write(tmp_dict["doc_key"])
                     negf.write("\n-----------------\n")
+            else:
+
+                if args.store_error_reason:
+                    correct_reason = instance(tmp_dict).get_correct_reason(demo, idtoprompt, reltoid, args)
+                    store_error_reason[instance(tmp_dict).id] = correct_reason
 
             with open("{}/results.txt".format(store_path),"a") as negf:
                 #negf.write(args)
@@ -640,26 +732,39 @@ def run(reltoid, idtoprompt, store_path, args):
                 negf.write(str(f1_result))
                 negf.write("\n")
                 #negf.write(labels[num])
+                negf.write(tmp_dict["doc_key"])
                 negf.write("\n-----------------\n")
             #print(results[0])
             #print(probs[0])
             #if num > 100:
             #    assert False
             print("processing:", 100*num/len(test_examples), "%", end="\n")
-            #print(classification_report(labels, preds, digits=4))
+        print(classification_report(labels, preds, digits=4))
         report = classification_report(labels, preds, digits=4,output_dict=True)
+        if args.store_error_reason:
+            with open("stored_reason/{}_dev.txt".format(args.task), "w") as f:
+                json.dump(store_error_reason, f)
         with open("{}/labels.csv".format(store_path), "w") as f:
             f.write('\n'.join([str(labels)]))
         with open("{}/preds.csv".format(store_path), "w") as f:
             f.write('\n'.join([str(preds)]))
+        with open("{}/probs.csv".format(store_path), "w") as f:
+            for prob in whole_prob:
+                json.dump(prob, f)
+                f.write("\n")
+        with open("{}/prob_on_rel.csv".format(store_path), "w") as f:
+            f.write('\n'.join([str(x) for x in whole_prob_on_rel]))
         micro_f1 += f1_result["f1"]
+        with open("{}/azure_error.csv".format(store_path), "w") as f:
+            f.write('\n'.join([str(azure_error)]))
         with open("{}/knn.csv".format(store_path), "w") as f:
             for line in whole_knn:
                 f.write('\n'.join([str(line)]))
                 f.write("\n")
         df = pd.DataFrame(report).transpose()
         df.to_csv("{}/result_per_rel.csv".format(store_path))
-        print(report)
+        #print(report)
+        print(azure_error)
         #assert False
     avg_f1 = micro_f1 / args.num_run
     print("AVG f1:", avg_f1)
@@ -668,7 +773,7 @@ def run(reltoid, idtoprompt, store_path, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=str, default=None, required=True, choices=["ace05","semeval","tacred"])
+    parser.add_argument("--task", type=str, default=None, required=True, choices=["ace05","semeval","tacred","scierc","wiki80"])
     parser.add_argument("--model", default=None, type=str, required=True)
     parser.add_argument("--num_test", type=int, default=100)
     parser.add_argument("--example_dataset", type=str, default=None, required=True)
@@ -683,26 +788,45 @@ if __name__ == "__main__":
     parser.add_argument("--random_label", type=int, default=0)
     parser.add_argument("--reasoning", type=int, default=0)
     parser.add_argument("--use_knn", type=int, default=0)
+    parser.add_argument("--lm_mask", type=int, default=0)
     parser.add_argument("--k", type=int, default=0)
     parser.add_argument("--bert_sim", type=int, default=1)
     parser.add_argument("--var", type=int, default=0)
     parser.add_argument("--reverse", type=int, default=0)
     parser.add_argument("--verbalize", type=int, default=0)
     parser.add_argument("--entity_info", type=int, default=0)
+    parser.add_argument("--structure", type=int, default=0)
+    parser.add_argument("--use_ft", type=int, default=0)
+    parser.add_argument("--self_error", type=int, default=0)
+    parser.add_argument("--use_dev", type=int, default=0)
+    parser.add_argument("--store_error_reason", type=int, default=0)
+    parser.add_argument("--discriminator", type=int, default=0)
+    parser.add_argument("--name", type=str, default=0)
+    parser.add_argument("--null", type=str, default=1)
 
     tacred_idtoprompt = {tacred_reltoid[k]:k.upper() for k in tacred_reltoid.keys()}
+    scierc_idtoprompt = {scierc_reltoid[k]:k.upper() for k in scierc_reltoid.keys()}
+    wiki_idtoprompt = {wiki_reltoid[k]:k.upper() for k in wiki_reltoid.keys()}
 
     args = parser.parse_args()
-    if args.verbalize:
+    if args.null == 1:
+        args.null = True
+    else:
+        args.null = False
+    if args.lm_mask == 1:
+        args.lm_mask = True
+    else:
+        args.lm_mask = False
+    if args.verbalize == 1:
         args.verbalize = True
     else:
         args.verbalize = False
 
-    if args.entity_info:
+    if args.entity_info == 1:
         args.entity_info = True
     else:
         args.entity_info = False
-    if args.reverse:
+    if args.reverse == 1:
         args.reverse = True
     else:
         args.reverse = False
@@ -743,7 +867,7 @@ if __name__ == "__main__":
         print(args.no_na)
         print(args.num_na)
         assert False
-    store_path = "./knn_{}_results/wholetest/test={}_knn={}_reverse={}_nona={}_var={}_{}_{}_seed={}_{}_randomlabel={}_fixedex={}_fixedtest={}_Reason={}_Verbalize={}_Entityinfo={}".format(args.task, args.num_test, args.k, args.reverse, args.no_na, args.var, args.num_per_rel,args.num_na,args.seed,args.model,str(args.random_label),str(args.fixed_example),str(args.fixed_test), str(args.reasoning), args.verbalize, args.entity_info)
+    store_path = "./results/knn_{}_results/test={}_knn={}_reverse={}_nona={}_var={}_{}_{}_seed={}_{}_randomlabel={}_fixedex={}_fixedtest={}_Reason={}_Verbalize={}_Entityinfo={}_structure={}_useft={}_selferror={}_usedev={}_discri={}_{}".format(args.task, args.num_test, args.k, args.reverse, args.no_na, args.var, args.num_per_rel,args.num_na,args.seed,args.model,str(args.random_label),str(args.fixed_example),str(args.fixed_test), str(args.reasoning), args.verbalize, args.entity_info,args.structure, args.use_ft, args.self_error, args.use_dev, args.discriminator, args.name)
     if not os.path.exists(store_path):
         os.mkdir(store_path)
     
@@ -759,8 +883,13 @@ if __name__ == "__main__":
         #example_dataset = "./dataset/ace05/test.json"
         #dataset = "./dataset/ace05/ace05_0.2/ace05_0.2_test.txt"
         run(ace05_reltoid,ace05_idtoprompt, store_path, args)
-    else:
+    elif args.task == "tacred":
         run(tacred_reltoid, tacred_idtoprompt, store_path, args)
+    elif args.task == "scierc":
+        run(scierc_reltoid, scierc_idtoprompt, store_path, args)
+    elif args.task == "wiki80":
+        
+        run(wiki_reltoid, wiki_idtoprompt, store_path, args)
     #relation_list = ["\""+x+"\"" for x in tacred_relation.keys()]
     #relation_set = ",".join(relation_list)
 

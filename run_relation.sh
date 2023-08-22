@@ -1,6 +1,6 @@
 python3 gpt3_relation.py \
     --task semeval \
-    --model kunlp-text-davinci-003 \
+    --model text-davinci-003 \
     --num_test 10 \
     --example_dataset "./dataset/semeval_gpt/train.json" \
     --test_dataset "./dataset/semeval_gpt/test.json" \
