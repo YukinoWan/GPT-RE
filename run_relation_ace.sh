@@ -1,0 +1,27 @@
+python3 gpt3_relation.py \
+    --task ace05 \
+    --model text-davinci-003 \
+    --num_test 2442 \
+    --example_dataset "./dataset/ace05/train.json" \
+    --test_dataset "./dataset/ace05/test.json" \
+    --fixed_example 0\
+    --fixed_test 1\
+    --num_per_rel 0 \
+    --num_na 0 \
+    --no_na 0 \
+    --num_run 1 \
+    --seed 0 \
+    --random_label 0 \
+    --reasoning 0 \
+    --use_knn 1 \
+    --k 10 \
+    --var 0 \
+    --reverse 0 \
+    --verbalize 0 \
+    --entity_info 1 \
+    --structure 0 \
+    --use_ft 0 \
+    --self_error 0 \
+    --use_dev 0 \
+    --store_error_reason 0 \
+    --discriminator 0

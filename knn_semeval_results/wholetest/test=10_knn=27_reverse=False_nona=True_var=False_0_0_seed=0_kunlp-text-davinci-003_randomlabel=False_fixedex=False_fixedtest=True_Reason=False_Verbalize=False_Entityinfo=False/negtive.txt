@@ -1,0 +1,76 @@
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: below is a code snippet for creating a timestamp from formatted date date .
+Given the context, the relation between timestamp and date is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.3108355141887664
+Prediction: 9
+Gold: 4
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: the oak tree was growing in the woods of the longleat estate , in wiltshire , at the time darwin was alive and developing his theory .
+Given the context, the relation between tree and woods is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.5280557361272317
+Prediction: 2
+Gold: 6
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: from their sleeping place in some unseen vale below , came the clamour of homing rooks .
+Given the context, the relation between rooks and clamour is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.35642793693346747
+Prediction: 9
+Gold: 6
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: the magazines were delivered to the subscribers on tuesday .
+Given the context, the relation between magazines and subscribers is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.7494609231676075
+Prediction: 5
+Gold: 3
+
+-----------------

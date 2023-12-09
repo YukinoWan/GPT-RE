@@ -1,0 +1,180 @@
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: below is a code snippet for creating a timestamp from formatted date date .
+Given the context, the relation between timestamp and date is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.3108355141887664
+Prediction: 9
+Gold: 4
+{'precision': 0.0, 'recall': 0.0, 'f1': 0.0}
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: my 8 year old daughter came up with an extremely good idea .
+Given the context, the relation between idea and daughter is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.5385826943084878
+Prediction: 5
+Gold: 5
+{'precision': 0.5, 'recall': 0.5, 'f1': 0.5}
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: the title has been won by an american lady , lee redmond , who has been growing her finger nails since the last 27 years .
+Given the context, the relation between nails and finger is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.32105822050768623
+Prediction: 2
+Gold: 2
+{'precision': 0.6666666666666666, 'recall': 0.6666666666666666, 'f1': 0.6666666666666666}
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: the oak tree was growing in the woods of the longleat estate , in wiltshire , at the time darwin was alive and developing his theory .
+Given the context, the relation between tree and woods is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.5280557361272317
+Prediction: 2
+Gold: 6
+{'precision': 0.5, 'recall': 0.5, 'f1': 0.5}
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: from their sleeping place in some unseen vale below , came the clamour of homing rooks .
+Given the context, the relation between rooks and clamour is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.35642793693346747
+Prediction: 9
+Gold: 6
+{'precision': 0.4, 'recall': 0.4, 'f1': 0.4000000000000001}
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: a musician who has written an album describing suicide bombers has said he is prepared to be imprisoned under new anti-terrorism legislation .
+Given the context, the relation between album and musician is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.8822871403542395
+Prediction: 5
+Gold: 5
+{'precision': 0.5, 'recall': 0.5, 'f1': 0.5}
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: the magazines were delivered to the subscribers on tuesday .
+Given the context, the relation between magazines and subscribers is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.7494609231676075
+Prediction: 5
+Gold: 3
+{'precision': 0.42857142857142855, 'recall': 0.42857142857142855, 'f1': 0.42857142857142855}
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: the country was a confederation of various tribal peoples of caucasian descent ( closely associated with the georgians and the peoples of the modern russian north caucasus ) .
+Given the context, the relation between peoples and confederation is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.7867143634219687
+Prediction: 6
+Gold: 6
+{'precision': 0.5, 'recall': 0.5, 'f1': 0.5}
+
+-----------------
+I'm a knowledgeable person. I will solve the relation extraction (RE) task. Given the context, I'll output the most precise relation between two entities based on the context, choosing from nine possible relations:
+CAUSE AND EFFECT: an event or object yields an effect
+COMPONENT AND WHOLE: an object is a component of a larger whole
+ENTITY AND DESTINATION: an entity is moving towards a destination
+ENTITY AND ORIGIN: an entity is coming or is derived from an origin
+PRODUCT AND PRODUCER: a producer causes a product to exist
+MEMBER AND COLLECTION: a member forms a nonfunctional part of a collection
+MESSAGE AND TOPIC: an act of communication, written or spoken, is about a topic
+CONTENT AND CONTAINER: an object is physically stored in a delineated area of space
+INSTRUMENT AND AGENCY: an agent uses an instrument
+
+Context: the ship sailed from the port only once and was registered in liverpool .
+Given the context, the relation between ship and port is
+{'Other': 0, 'Cause-Effect': 1, 'Component-Whole': 2, 'Entity-Destination': 3, 'Entity-Origin': 4, 'Product-Producer': 5, 'Member-Collection': 6, 'Message-Topic': 7, 'Content-Container': 8, 'Instrument-Agency': 9}
+0.6092723516460026
+Prediction: 4
+Gold: 4
+{'precision': 0.5555555555555556, 'recall': 0.5555555555555556, 'f1': 0.5555555555555556}
+
+-----------------
