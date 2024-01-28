@@ -1,4 +1,4 @@
-For the usage of faiss, I recommend to use conda environment (python 3.10).
+For the usage of faiss, I recommend to use conda environment (python 3.10), since faiss will fail with pip installation.
 
 # Installtion
 `conda install -c pytorch -c nvidia faiss-gpu=1.7.4 mkl=2021 blas=1.0=mkl`
