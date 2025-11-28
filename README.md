@@ -1,36 +1,97 @@
-## Introduction
-### This the repository for the paper "GPT-RE: In-context Learning for Relation Extraction using Large Language Models"
-This repository now supports GPT-Random, GPT-SimCSE and the reasoning logic in the paper, GPT-RE_FT method is not supported in the current version, we will soon update.
+# GPT-RE: In-context Learning for Relation Extraction using Large Language Models
 
+This is the official repository for the paper **"GPT-RE: In-context Learning for Relation Extraction using Large Language Models"** (EMNLP 2023).
 
-## Usage  
-```   
-bash run_relation_ace.sh   
-```   
-In the example script file `run_relation_ace.sh`, there are multiple options:   
-`--task`: name of the task, eg. semeval    
-`--model`: name of the model used in gpt3, eg. text-davinci-003   
-`--num_test`: number of examples in the test subset, eg. 100, this should be smaller than the length of the test dataset    
-`--example_dataset`: the file to choose demonstrations   
-`--test_dataset`: the path to the test data, note that it should be changed to "test.json" if you want to work on the whole test data   
-`--fixed_example`: if 1, then the demonstration examples will be fixed during the test; if 0, then for each test example, the demonstrations will be retrieved again. In kNN setup, it should be 0   
-`--fixed_test`: if 1, then the test dataset will be fixed (this option can be ignored as you can directly change test data by `--test_dataset`   
-`--num_per_rel`: the number of examples per relation type chosed to be the demonstrations, this should be 0 in kNN setup   
-`--num_na`: the number of NA examples chosed to be the demonstrations, this should be 0 in both w/o NA setup and kNN setup   
-`--num_run`: keep 1   
-`--seed`: random seed   
-`--random_label`: if 1, the model will change the gold lables to random labels in the demonstration   
-`--reasoning`: if 1, the model will add reasoning to the demonstrations   
-`--use_knn`: if 1, use kNN in demonstrations   
-`--k`: top k in kNN   
-`--var`: you can igore it, keep 0
-`--reverse`: reverse the order of demonstrations, if 0, the default order is that more similar demonstrations will be placed at the top.
-`--verbalize`: you can ignore it, keep 0
-`--entity_info`: entity-aware sentence similarity in our paper
-`--structure`: a trial to use structured prompt, you can ignore it
-`--use_ft`: the fine-tuned representation, this option is not yet supported in the current version
-`--self_error`: you can ignore it ,keep 0
-`--use_dev, store_error_reason, discriminator`: keep 0
+## Updates
 
+**[New]** The **GPT-RE with Fine-Tuned representations (GPT-RE_FT)** method is now available! The code has been reproduced and organized in our follow-up work. Please visit:
 
+> **[GPT-RE-FT Repository](https://github.com/HanPT831/GPT-RE-FT)**
+
+This repository contains the complete implementation including fine-tuned representation methods that were not included in the original release.
+
+## Supported Features
+
+This repository supports the following methods from the paper:
+- **GPT-Random**: Random demonstration selection
+- **GPT-SimCSE**: SimCSE-based similar demonstration retrieval
+- **Reasoning Logic**: Task-aware reasoning in demonstrations
+- **Entity-aware Similarity**: Entity information enhanced retrieval
+
+## Usage
+
+```bash
+bash run_relation_ace.sh
+```
+
+## Configuration Options
+
+In the example script file `run_relation_ace.sh`, the following options are available:
+
+### Basic Settings
+| Option | Description | Example |
+|--------|-------------|---------|
+| `--task` | Name of the task | `semeval`, `ace05`, `scierc` |
+| `--model` | GPT model name | `text-davinci-003` |
+| `--seed` | Random seed | `42` |
+
+### Data Settings
+| Option | Description |
+|--------|-------------|
+| `--num_test` | Number of test examples (should be smaller than test dataset size) |
+| `--example_dataset` | File path for demonstration examples |
+| `--test_dataset` | Path to test data (use `test.json` for full test set) |
+
+### Demonstration Settings
+| Option | Description |
+|--------|-------------|
+| `--fixed_example` | `1`: Fixed demonstrations; `0`: Re-retrieve for each test (use `0` for kNN) |
+| `--fixed_test` | `1`: Fixed test dataset (can be ignored, use `--test_dataset` instead) |
+| `--num_per_rel` | Examples per relation type for demonstrations (use `0` for kNN) |
+| `--num_na` | NA examples for demonstrations (use `0` for w/o NA and kNN setups) |
+| `--num_run` | Keep `1` |
+
+### Method Settings
+| Option | Description |
+|--------|-------------|
+| `--random_label` | `1`: Use random labels in demonstrations |
+| `--reasoning` | `1`: Add reasoning to demonstrations |
+| `--use_knn` | `1`: Use kNN for demonstration retrieval |
+| `--k` | Top-k for kNN retrieval |
+| `--reverse` | `1`: Reverse demonstration order (default `0`: more similar at top) |
+| `--entity_info` | Entity-aware sentence similarity (from our paper) |
+
+### Advanced Options (can be ignored)
+| Option | Description |
+|--------|-------------|
+| `--var` | Keep `0` |
+| `--verbalize` | Keep `0` |
+| `--structure` | Structured prompt trial, keep default |
+| `--use_ft` | Fine-tuned representation - **see [GPT-RE-FT](https://github.com/HanPT831/GPT-RE-FT) for full support** |
+| `--self_error` | Keep `0` |
+| `--use_dev`, `--store_error_reason`, `--discriminator` | Keep `0` |
+
+## Datasets
+
+The repository includes preprocessed data for:
+- SemEval 2010 Task 8
+- ACE05
+- SciERC
+
+## Citation
+
+If you find this work helpful, please cite our paper:
+
+```bibtex
+@inproceedings{wan2023gpt,
+  title={GPT-RE: In-context Learning for Relation Extraction using Large Language Models},
+  author={Wan, Zhen and Cheng, Fei and Mao, Zhuoyuan and Liu, Qianying and Song, Haiyue and Li, Jiwei and Kurohashi, Sadao},
+  booktitle={Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing},
+  year={2023}
+}
+```
+
+## License
+
+Please refer to the LICENSE file for details.
 
